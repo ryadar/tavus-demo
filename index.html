@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Tavus AI Assistant</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    .description {
+      color: #666;
+      margin-bottom: 25px;
+    }
+
+    button {
+      padding: 14px 28px;
+      border: none;
+      border-radius: 8px;
+      background: #111827;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #374151;
+    }
+
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    #status {
+      margin: 20px 0;
+      color: #555;
+    }
+
+    #videoContainer {
+      display: none;
+      width: 100%;
+      height: 650px;
+      background: black;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    #tavusFrame {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    #error {
+      display: none;
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      background: #fee2e2;
+      color: #991b1b;
+      text-align: left;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>AI Video Assistant</h1>
+
+    <p class="description">
+      Talk with our AI assistant powered by Tavus.
+    </p>
+
+    <button id="startButton">
+      🎥 Start Conversation
+    </button>
+
+    <div id="status"></div>
+
+    <div id="error"></div>
+
+    <div id="videoContainer">
+      <iframe
+        id="tavusFrame"
+        allow="camera; microphone; fullscreen; display-capture"
+      ></iframe>
+    </div>
+
+  </div>
+
+
+  <script>
+
+    /*
+     * ============================================================
+     * TAVUS CONFIGURATION
+     * ============================================================
+     *
+     * FOR LOCAL TESTING ONLY.
+     *
+     * DO NOT PUT YOUR API KEY IN FRONTEND CODE IN PRODUCTION.
+     */
+
+    const TAVUS_API_KEY = "69e46f1054734d7eb5aa77f163b644af";
+
+    const TAVUS_REPLICA_ID = "r90bbd427f71";
+
+    const TAVUS_PERSONA_ID = "pcb7a34da5fe";
+
+
+    /*
+     * ============================================================
+     * DOM ELEMENTS
+     * ============================================================
+     */
+
+    const startButton =
+      document.getElementById("startButton");
+
+    const status =
+      document.getElementById("status");
+
+    const videoContainer =
+      document.getElementById("videoContainer");
+
+    const tavusFrame =
+      document.getElementById("tavusFrame");
+
+    const errorBox =
+      document.getElementById("error");
+
+
+    /*
+     * ============================================================
+     * START TAVUS CONVERSATION
+     * ============================================================
+     */
+
+    async function startConversation() {
+
+      startButton.disabled = true;
+
+      status.textContent =
+        "Creating Tavus conversation...";
+
+      errorBox.style.display = "none";
+
+
+      try {
+
+        const response = await fetch(
+          "https://tavusapi.com/v2/conversations",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+
+              "x-api-key": TAVUS_API_KEY
+            },
+
+            body: JSON.stringify({
+
+              replica_id: TAVUS_REPLICA_ID,
+
+              persona_id: TAVUS_PERSONA_ID
+
+            })
+          }
+        );
+
+
+        /*
+         * Get response from Tavus
+         */
+
+        const data = await response.json();
+
+
+        console.log("Tavus response:", data);
+
+
+        /*
+         * Handle API error
+         */
+
+        if (!response.ok) {
+
+          throw new Error(
+            JSON.stringify(
+              data,
+              null,
+              2
+            )
+          );
+
+        }
+
+
+        /*
+         * Make sure Tavus returned
+         * a conversation URL
+         */
+
+        if (!data.conversation_url) {
+
+          throw new Error(
+            "Tavus did not return a conversation_url."
+          );
+
+        }
+
+
+        /*
+         * Display conversation
+         */
+
+        tavusFrame.src =
+          data.conversation_url;
+
+
+        videoContainer.style.display =
+          "block";
+
+
+        status.textContent =
+          "Conversation started. You can now talk with the AI.";
+
+
+        /*
+         * Change button
+         */
+
+        startButton.textContent =
+          "Conversation Started";
+
+
+      } catch (error) {
+
+        console.error(
+          "Tavus error:",
+          error
+        );
+
+
+        status.textContent =
+          "Unable to start conversation.";
+
+
+        errorBox.style.display =
+          "block";
+
+
+        errorBox.textContent =
+          "Error:\n\n" +
+          error.message;
+
+
+        startButton.disabled =
+          false;
+
+      }
+
+    }
+
+
+    /*
+     * ============================================================
+     * BUTTON EVENT
+     * ============================================================
+     */
+
+    startButton.addEventListener(
+      "click",
+      startConversation
+    );
+
+  </script>
+
+</body>
+</html>
